@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Build Vooz Peer Server
 
 on:
   push:
@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  test-and-lint:
+  build:
+    name: CI Build Vooz Peer Server
     runs-on: ubuntu-latest
     services:
       redis:
@@ -39,7 +40,7 @@ jobs:
         run: npm run coverage
 
   docker-push:
-    needs: CI Build Vooz Peer Server 
+    needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
