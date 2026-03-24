@@ -15,7 +15,12 @@ export class RedisAdapter implements IRedisAdapter {
 	private readonly channel = "peerjs:messages";
 	private readonly queuePrefix = "peerjs:queue:";
 
-	constructor(options: { host?: string; port?: number; password?: string; keyPrefix?: string }) {
+	constructor(options: {
+		host?: string;
+		port?: number;
+		password?: string;
+		keyPrefix?: string;
+	}) {
 		this.pub = new Redis({
 			...options,
 		});
@@ -42,7 +47,10 @@ export class RedisAdapter implements IRedisAdapter {
 		});
 	}
 
-	public async addMessageToQueue(clientId: string, message: IMessage): Promise<void> {
+	public async addMessageToQueue(
+		clientId: string,
+		message: IMessage,
+	): Promise<void> {
 		const key = `${this.queuePrefix}${clientId}`;
 		await this.pub.rpush(key, JSON.stringify(message));
 		// Set expiry for 24 hours just in case

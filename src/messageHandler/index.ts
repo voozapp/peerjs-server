@@ -67,7 +67,10 @@ export class MessageHandler implements IMessageHandler {
 		);
 	}
 
-	public async handle(client: IClient | undefined, message: IMessage): Promise<boolean> {
+	public async handle(
+		client: IClient | undefined,
+		message: IMessage,
+	): Promise<boolean> {
 		return await this.handlersRegistry.handle(client, message);
 	}
 }

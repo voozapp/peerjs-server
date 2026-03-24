@@ -1,72 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>PeerJS Multi-Pod Test</title>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <style>
-        body { font-family: sans-serif; display: flex; gap: 20px; }
-        .column { border: 1px solid #ccc; padding: 20px; flex: 1; border-radius: 8px; }
-        .status { font-weight: bold; margin-bottom: 10px; }
-        .log { background: #f0f0f0; padding: 10px; height: 200px; overflow-y: auto; font-size: 12px; }
-        .pod-a { border-top: 5px solid #ff4444; }
-        .pod-b { border-top: 5px solid #4444ff; }
-    </style>
-</head>
-<body>
+	<head>
+		<title>PeerJS Multi-Pod Test</title>
+		<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+		<style>
+			body {
+				font-family: sans-serif;
+				display: flex;
+				gap: 20px;
+			}
+			.column {
+				border: 1px solid #ccc;
+				padding: 20px;
+				flex: 1;
+				border-radius: 8px;
+			}
+			.status {
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.log {
+				background: #f0f0f0;
+				padding: 10px;
+				height: 200px;
+				overflow-y: auto;
+				font-size: 12px;
+			}
+			.pod-a {
+				border-top: 5px solid #ff4444;
+			}
+			.pod-b {
+				border-top: 5px solid #4444ff;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="column pod-a">
+			<h2>Client A (Pod A - 9000)</h2>
+			<div id="status-a" class="status">Connecting...</div>
+			<button id="btn-msg" disabled>Send Message to Peer B</button>
+			<div id="log-a" class="log"></div>
+		</div>
 
-<div class="column pod-a">
-    <h2>Client A (Pod A - 9000)</h2>
-    <div id="status-a" class="status">Connecting...</div>
-    <button id="btn-msg" disabled>Send Message to Peer B</button>
-    <div id="log-a" class="log"></div>
-</div>
+		<div class="column pod-b">
+			<h2>Client B (Pod B - 9001)</h2>
+			<div id="status-b" class="status">Connecting...</div>
+			<div id="log-b" class="log"></div>
+		</div>
 
-<div class="column pod-b">
-    <h2>Client B (Pod B - 9001)</h2>
-    <div id="status-b" class="status">Connecting...</div>
-    <div id="log-b" class="log"></div>
-</div>
+		<script>
+			function log(id, msg) {
+				const el = document.getElementById("log-" + id);
+				el.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
+				el.scrollTop = el.scrollHeight;
+			}
 
-<script>
-    function log(id, msg) {
-        const el = document.getElementById('log-' + id);
-        el.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
-        el.scrollTop = el.scrollHeight;
-    }
+			// Peer A on Port 9000
+			const peerA = new Peer("peer-a", {
+				host: "localhost",
+				port: 9000,
+				path: "/",
+			});
+			peerA.on("open", (id) => {
+				document.getElementById("status-a").innerText = "Connected: " + id;
+				document.getElementById("btn-msg").disabled = false;
+				log("a", "Connected to Pod A");
+			});
+			peerA.on("error", (err) => log("a", "Error: " + err.type));
 
-    // Peer A on Port 9000
-    const peerA = new Peer('peer-a', { host: 'localhost', port: 9000, path: '/' });
-    peerA.on('open', (id) => {
-        document.getElementById('status-a').innerText = 'Connected: ' + id;
-        document.getElementById('btn-msg').disabled = false;
-        log('a', 'Connected to Pod A');
-    });
-    peerA.on('error', err => log('a', 'Error: ' + err.type));
+			// Peer B on Port 9001
+			const peerB = new Peer("peer-b", {
+				host: "localhost",
+				port: 9001,
+				path: "/",
+			});
+			peerB.on("open", (id) => {
+				document.getElementById("status-b").innerText = "Connected: " + id;
+				log("b", "Connected to Pod B");
+			});
+			peerB.on("connection", (conn) => {
+				conn.on("data", (data) => {
+					log("b", "Received from A: " + data);
+				});
+				log("b", "Incoming connection from A");
+			});
+			peerB.on("error", (err) => log("b", "Error: " + err.type));
 
-    // Peer B on Port 9001
-    const peerB = new Peer('peer-b', { host: 'localhost', port: 9001, path: '/' });
-    peerB.on('open', (id) => {
-        document.getElementById('status-b').innerText = 'Connected: ' + id;
-        log('b', 'Connected to Pod B');
-    });
-    peerB.on('connection', conn => {
-        conn.on('data', data => {
-            log('b', 'Received from A: ' + data);
-        });
-        log('b', 'Incoming connection from A');
-    });
-    peerB.on('error', err => log('b', 'Error: ' + err.type));
-
-    document.getElementById('btn-msg').onclick = () => {
-        log('a', 'Attempting to connect to Peer B (on Pod B)...');
-        const conn = peerA.connect('peer-b');
-        conn.on('open', () => {
-            log('a', 'Connection to B opened!');
-            conn.send('Hello from Pod A through Redis!');
-        });
-        conn.on('error', err => log('a', 'Conn Error: ' + err));
-    };
-</script>
-
-</body>
+			document.getElementById("btn-msg").onclick = () => {
+				log("a", "Attempting to connect to Peer B (on Pod B)...");
+				const conn = peerA.connect("peer-b");
+				conn.on("open", () => {
+					log("a", "Connection to B opened!");
+					conn.send("Hello from Pod A through Redis!");
+				});
+				conn.on("error", (err) => log("a", "Conn Error: " + err));
+			};
+		</script>
+	</body>
 </html>

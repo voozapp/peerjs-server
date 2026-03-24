@@ -22,12 +22,12 @@ jobs:
       REDIS_HOST: localhost
       REDIS_PORT: 6379
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - name: Setup Node.js 20
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
       - name: Run Format Check
@@ -39,14 +39,14 @@ jobs:
         run: npm run coverage
 
   docker-push:
-    needs: test-and-lint
+    needs: CI Build Vooz Peer Server 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to the Container registry

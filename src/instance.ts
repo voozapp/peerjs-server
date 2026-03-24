@@ -95,7 +95,9 @@ export const createInstance = ({
 	wss.on("connection", (client: IClient) => {
 		void (async () => {
 			if (redisAdapter) {
-				const messages = await redisAdapter.getMessagesFromQueue(client.getId());
+				const messages = await redisAdapter.getMessagesFromQueue(
+					client.getId(),
+				);
 				for (const message of messages) {
 					await messageHandler.handle(client, message);
 				}

@@ -11,7 +11,10 @@ export const TransmissionHandler = ({
 	realm: IRealm;
 	redisAdapter?: IRedisAdapter;
 }): ((client: IClient | undefined, message: IMessage) => Promise<boolean>) => {
-	const handle = async (client: IClient | undefined, message: IMessage): Promise<boolean> => {
+	const handle = async (
+		client: IClient | undefined,
+		message: IMessage,
+	): Promise<boolean> => {
 		const type = message.type;
 		const srcId = message.src;
 		const dstId = message.dst;
@@ -49,14 +52,14 @@ export const TransmissionHandler = ({
 		} else {
 			// If we have a redis adapter, publish to other pods
 			// But we must check if this message was already a redis-broadcast to avoid loops
-			// We can adding a flag to the message or use a specific source pod ID, 
+			// We can adding a flag to the message or use a specific source pod ID,
 			// but a simpler way is to check if we are the "source" pod for this client.
 			// Actually, if we are here and destinationClient is null, it means the client is NOT on this pod.
-			
+
 			// To avoid infinite loops: only publish IF the message didn't come FROM redis.
-			// However, our RedisAdapter doesn't mark messages. 
+			// However, our RedisAdapter doesn't mark messages.
 			// Let's add an internal property `_broadcast` to the message when publishing.
-			
+
 			interface IBroadcastMessage extends IMessage {
 				_broadcast?: boolean;
 			}

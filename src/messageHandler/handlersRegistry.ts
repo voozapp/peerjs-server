@@ -17,7 +17,10 @@ export class HandlersRegistry implements IHandlersRegistry {
 		this.handlers.set(messageType, handler);
 	}
 
-	public async handle(client: IClient | undefined, message: IMessage): Promise<boolean> {
+	public async handle(
+		client: IClient | undefined,
+		message: IMessage,
+	): Promise<boolean> {
 		const { type } = message;
 
 		const handler = this.handlers.get(type);
