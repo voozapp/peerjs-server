@@ -2,6 +2,9 @@
 
 import path from "node:path";
 import fs from "node:fs";
+import * as dotenv from "dotenv";
+dotenv.config();
+
 const optimistUsageLength = 98;
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -84,6 +87,26 @@ const opts = y
 			array: true,
 			describe: "Set the list of CORS origins",
 		},
+		"redis-host": {
+			type: "string",
+			demandOption: false,
+			describe: "Redis host",
+			default: process.env["REDIS_HOST"],
+		},
+		"redis-port": {
+			type: "number",
+			demandOption: false,
+			describe: "Redis port",
+			default: process.env["REDIS_PORT"]
+				? parseInt(process.env["REDIS_PORT"])
+				: undefined,
+		},
+		"redis-password": {
+			type: "string",
+			demandOption: false,
+			describe: "Redis password",
+			default: process.env["REDIS_PASSWORD"],
+		},
 	})
 	.boolean("allow_discovery")
 	.parseSync();
@@ -97,6 +120,13 @@ if (opts.cors) {
 	opts["corsOptions"] = {
 		origin: opts.cors,
 	} satisfies CorsOptions;
+}
+if (opts["redis-host"] || opts["redis-port"]) {
+	opts["redisOptions"] = {
+		host: opts["redis-host"],
+		port: opts["redis-port"],
+		password: opts["redis-password"],
+	};
 }
 process.on("uncaughtException", function (e) {
 	console.error("Error: " + e.toString());

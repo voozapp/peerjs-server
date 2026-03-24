@@ -6,24 +6,29 @@ import type { IClient } from "../models/client.ts";
 import type { IMessage } from "../models/message.ts";
 import type { IRealm } from "../models/realm.ts";
 import type { Handler } from "./handler.ts";
+import type { IRedisAdapter } from "../adapters/redisAdapter.ts";
 
 export interface IMessageHandler {
-	handle(client: IClient | undefined, message: IMessage): boolean;
+	handle(client: IClient | undefined, message: IMessage): Promise<boolean>;
 }
 
 export class MessageHandler implements IMessageHandler {
 	constructor(
 		realm: IRealm,
 		private readonly handlersRegistry: IHandlersRegistry = new HandlersRegistry(),
+		redisAdapter?: IRedisAdapter,
 	) {
-		const transmissionHandler: Handler = TransmissionHandler({ realm });
+		const transmissionHandler: Handler = TransmissionHandler({
+			realm,
+			redisAdapter,
+		});
 		const heartbeatHandler: Handler = HeartbeatHandler;
 
-		const handleTransmission: Handler = (
+		const handleTransmission: Handler = async (
 			client: IClient | undefined,
 			{ type, src, dst, payload }: IMessage,
-		): boolean => {
-			return transmissionHandler(client, {
+		): Promise<boolean> => {
+			return await transmissionHandler(client, {
 				type,
 				src,
 				dst,
@@ -31,8 +36,10 @@ export class MessageHandler implements IMessageHandler {
 			});
 		};
 
-		const handleHeartbeat = (client: IClient | undefined, message: IMessage) =>
-			heartbeatHandler(client, message);
+		const handleHeartbeat = async (
+			client: IClient | undefined,
+			message: IMessage,
+		) => await heartbeatHandler(client, message);
 
 		this.handlersRegistry.registerHandler(
 			MessageType.HEARTBEAT,
@@ -60,7 +67,7 @@ export class MessageHandler implements IMessageHandler {
 		);
 	}
 
-	public handle(client: IClient | undefined, message: IMessage): boolean {
-		return this.handlersRegistry.handle(client, message);
+	public async handle(client: IClient | undefined, message: IMessage): Promise<boolean> {
+		return await this.handlersRegistry.handle(client, message);
 	}
 }

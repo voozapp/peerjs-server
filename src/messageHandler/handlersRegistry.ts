@@ -5,7 +5,7 @@ import type { Handler } from "./handler.ts";
 
 export interface IHandlersRegistry {
 	registerHandler(messageType: MessageType, handler: Handler): void;
-	handle(client: IClient | undefined, message: IMessage): boolean;
+	handle(client: IClient | undefined, message: IMessage): Promise<boolean>;
 }
 
 export class HandlersRegistry implements IHandlersRegistry {
@@ -17,13 +17,13 @@ export class HandlersRegistry implements IHandlersRegistry {
 		this.handlers.set(messageType, handler);
 	}
 
-	public handle(client: IClient | undefined, message: IMessage): boolean {
+	public async handle(client: IClient | undefined, message: IMessage): Promise<boolean> {
 		const { type } = message;
 
 		const handler = this.handlers.get(type);
 
 		if (!handler) return false;
 
-		return handler(client, message);
+		return await handler(client, message);
 	}
 }

@@ -19,6 +19,12 @@ export interface IConfig {
 	readonly generateClientId?: () => string;
 	readonly createWebSocketServer?: (options: ServerOptions) => WebSocketServer;
 	readonly corsOptions: CorsOptions;
+	readonly redisOptions?: {
+		readonly host?: string;
+		readonly port?: number;
+		readonly password?: string;
+		readonly keyPrefix?: string;
+	};
 }
 
 const defaultConfig: IConfig = {
@@ -33,6 +39,10 @@ const defaultConfig: IConfig = {
 	proxied: false,
 	cleanup_out_msgs: 1000,
 	corsOptions: { origin: true },
+	redisOptions: {
+		host: "127.0.0.1",
+		port: 6370,
+	},
 };
 
 export default defaultConfig;

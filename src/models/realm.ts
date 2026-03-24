@@ -17,16 +17,24 @@ export interface IRealm {
 
 	getMessageQueueById(id: string): IMessageQueue | undefined;
 
-	addMessageToQueue(id: string, message: IMessage): void;
+	addMessageToQueue(id: string, message: IMessage): Promise<void> | void;
 
-	clearMessageQueue(id: string): void;
+	clearMessageQueue(id: string): Promise<void> | void;
 
 	generateClientId(generateClientId?: () => string): string;
+	setRedisAdapter(adapter: IRedisAdapter): void;
 }
+
+import { IRedisAdapter } from "../adapters/redisAdapter.ts";
 
 export class Realm implements IRealm {
 	private readonly clients = new Map<string, IClient>();
 	private readonly messageQueues = new Map<string, IMessageQueue>();
+	private redisAdapter?: IRedisAdapter;
+
+	public setRedisAdapter(adapter: IRedisAdapter): void {
+		this.redisAdapter = adapter;
+	}
 
 	public getClientsIds(): string[] {
 		return [...this.clients.keys()];
@@ -58,7 +66,12 @@ export class Realm implements IRealm {
 		return this.messageQueues.get(id);
 	}
 
-	public addMessageToQueue(id: string, message: IMessage): void {
+	public async addMessageToQueue(id: string, message: IMessage): Promise<void> {
+		if (this.redisAdapter) {
+			await this.redisAdapter.addMessageToQueue(id, message);
+			return;
+		}
+
 		if (!this.getMessageQueueById(id)) {
 			this.messageQueues.set(id, new MessageQueue());
 		}
@@ -66,7 +79,11 @@ export class Realm implements IRealm {
 		this.getMessageQueueById(id)?.addMessage(message);
 	}
 
-	public clearMessageQueue(id: string): void {
+	public async clearMessageQueue(id: string): Promise<void> {
+		if (this.redisAdapter) {
+			await this.redisAdapter.clearMessageQueue(id);
+			return;
+		}
 		this.messageQueues.delete(id);
 	}
 

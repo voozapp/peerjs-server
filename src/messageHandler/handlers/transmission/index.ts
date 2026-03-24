@@ -2,20 +2,23 @@ import { MessageType } from "../../../enums.ts";
 import type { IClient } from "../../../models/client.ts";
 import type { IMessage } from "../../../models/message.ts";
 import type { IRealm } from "../../../models/realm.ts";
+import type { IRedisAdapter } from "../../../adapters/redisAdapter.ts";
 
 export const TransmissionHandler = ({
 	realm,
+	redisAdapter,
 }: {
 	realm: IRealm;
-}): ((client: IClient | undefined, message: IMessage) => boolean) => {
-	const handle = (client: IClient | undefined, message: IMessage) => {
+	redisAdapter?: IRedisAdapter;
+}): ((client: IClient | undefined, message: IMessage) => Promise<boolean>) => {
+	const handle = async (client: IClient | undefined, message: IMessage): Promise<boolean> => {
 		const type = message.type;
 		const srcId = message.src;
 		const dstId = message.dst;
 
 		const destinationClient = realm.getClientById(dstId);
 
-		// User is connected!
+		// User is connected to THIS pod!
 		if (destinationClient) {
 			const socket = destinationClient.getSocket();
 			try {
@@ -37,24 +40,35 @@ export const TransmissionHandler = ({
 					realm.removeClientById(destinationClient.getId());
 				}
 
-				handle(client, {
+				await handle(client, {
 					type: MessageType.LEAVE,
 					src: dstId,
 					dst: srcId,
 				});
 			}
 		} else {
-			// Wait for this client to connect/reconnect (XHR) for important
-			// messages.
-			const ignoredTypes = [MessageType.LEAVE, MessageType.EXPIRE];
-
-			if (!ignoredTypes.includes(type) && dstId) {
-				realm.addMessageToQueue(dstId, message);
-			} else if (type === MessageType.LEAVE && !dstId) {
-				realm.removeClientById(srcId);
+			// If we have a redis adapter, publish to other pods
+			// But we must check if this message was already a redis-broadcast to avoid loops
+			// We can adding a flag to the message or use a specific source pod ID, 
+			// but a simpler way is to check if we are the "source" pod for this client.
+			// Actually, if we are here and destinationClient is null, it means the client is NOT on this pod.
+			
+			// To avoid infinite loops: only publish IF the message didn't come FROM redis.
+			// However, our RedisAdapter doesn't mark messages. 
+			// Let's add an internal property `_broadcast` to the message when publishing.
+			
+			if (redisAdapter && !(message as any)._broadcast) {
+				await redisAdapter.publish({ ...message, _broadcast: true } as any);
 			} else {
-				// Unavailable destination specified with message LEAVE or EXPIRE
-				// Ignore
+				// Wait for this client to connect/reconnect (XHR) for important
+				// messages.
+				const ignoredTypes = [MessageType.LEAVE, MessageType.EXPIRE];
+
+				if (!ignoredTypes.includes(type) && dstId) {
+					await realm.addMessageToQueue(dstId, message);
+				} else if (type === MessageType.LEAVE && !dstId) {
+					realm.removeClientById(srcId);
+				}
 			}
 		}
 
