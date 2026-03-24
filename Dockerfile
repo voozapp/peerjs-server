@@ -15,7 +15,7 @@ FROM node:22-alpine AS production
 
 WORKDIR /peer-server
 
-LABEL org.opencontainers.image.source=https://github.com/voozapp/peerjs-server
+LABEL org.opencontainers.image.source=https://github.com/voozapp/vooz-peerjs-server
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev

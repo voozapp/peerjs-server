@@ -1,11 +1,6 @@
-[![Build Status](https://travis-ci.org/peers/peerjs-server.png?branch=master)](https://travis-ci.org/peers/peerjs-server)
-![node](https://img.shields.io/node/v/peer)
-![David](https://img.shields.io/david/peers/peerjs-server)
-[![npm version](https://badge.fury.io/js/peer.svg)](https://www.npmjs.com/package/peer)
-[![Downloads](https://img.shields.io/npm/dm/peer.svg)](https://www.npmjs.com/package/peer)
-[![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/peerjs/peerjs-server)](https://hub.docker.com/r/peerjs/peerjs-server)
+# PeerServer (Horizontal Scale Fork): A server for PeerJS
 
-# PeerServer: A server for PeerJS
+This fork of PeerServer is designed for **horizontal scalability** using Redis. It allows multiple PeerServer instances to share state and signal peers across different pods/nodes.
 
 PeerServer helps establishing connections between PeerJS clients. Data is not proxied through the server.
 
@@ -37,18 +32,26 @@ If you don't want to develop anything, just enter few commands below.
 
 3. Check it: http://127.0.0.1:9000/myapp It should returns JSON with name, description and website fields.
 
-#### Docker
+#### Docker (GHCR)
 
-Also, you can use Docker image to run a new container:
+This fork is deployed and maintained on GitHub Container Registry (GHCR).
 
 ```sh
-$ docker run -p 9000:9000 -d peerjs/peerjs-server
+$ docker run -p 9000:9000 \
+  -e REDIS_HOST=your-redis-host \
+  -e REDIS_PORT=6379 \
+  -d ghcr.io/voozapp/vooz-peerjs-server
 ```
 
 ##### Kubernetes
 
+For horizontal scaling, deploy multiple replicas and ensure they all point to the same Redis instance.
+
 ```sh
-$ kubectl run peerjs-server --image=peerjs/peerjs-server --port 9000 --expose -- --port 9000 --path /myapp
+$ kubectl run peerjs-server --image=ghcr.io/voozapp/vooz-peerjs-server --port 9000 --expose -- \
+  --port 9000 \
+  --redis-host redis-service \
+  --redis-port 6379
 ```
 
 ### Create a custom server:
@@ -104,8 +107,11 @@ You can provide config object to `PeerServer` function or specify options for `p
 | `--concurrent_limit, -c` | `concurrent_limit` | Maximum number of clients' connections to WebSocket server (number)                                                                                                                                                                                   |    No    |   `5000`   |
 | `--sslkey`               | `sslkey`           | Path to SSL key (string)                                                                                                                                                                                                                              |    No    |            |
 | `--sslcert`              | `sslcert`          | Path to SSL certificate (string)                                                                                                                                                                                                                      |    No    |            |
-| `--allow_discovery`      | `allow_discovery`  | Allow to use GET `/peers` http API method to get an array of ids of all connected clients (boolean)                                                                                                                                                   |    No    |            |
-| `--cors`                 | `corsOptions`      | The CORS origins that can access this server                                                                                                                                                                                                          |
+| `--allow_discovery`      | `allow_discovery`  | Allow to use GET `/peers` http API method to get an array of ids of all connected clients (boolean)                                                                                                                                                   |    No    |  `false`   |
+| `--cors`                 | `corsOptions`      | The CORS origins that can access this server                                                                                                                                                                                                          |    No    |            |
+| `--redis-host`           | `redisOptions.host`| Redis host for horizontal scaling. **Mandatory** for this fork.                                                                                                                                                                                       |  **Yes** |            |
+| `--redis-port`           | `redisOptions.port`| Redis port (default 6379)                                                                                                                                                                                                                             |    No    |   `6379`   |
+| `--redis-password`       | `redisOptions.password`| Redis password if required                                                                                                                                                                                                                        |    No    |            |
 |                          | `generateClientId` | A function which generate random client IDs when calling `/id` API method (`() => string`)                                                                                                                                                            |    No    | `uuid/v4`  |
 
 ## Using HTTPS
