@@ -17,10 +17,12 @@ export class MessageHandler implements IMessageHandler {
 		realm: IRealm,
 		private readonly handlersRegistry: IHandlersRegistry = new HandlersRegistry(),
 		redisAdapter?: IRedisAdapter,
+		messageQueueEnabled?: boolean,
 	) {
 		const transmissionHandler: Handler = TransmissionHandler({
 			realm,
 			redisAdapter,
+			messageQueueEnabled,
 		});
 		const heartbeatHandler: Handler = HeartbeatHandler;
 

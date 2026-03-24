@@ -13,8 +13,8 @@ export interface IConfig {
 	readonly proxied: boolean | string;
 	readonly cleanup_out_msgs: number;
 	readonly ssl?: {
-		key: string;
-		cert: string;
+		readonly key: string;
+		readonly cert: string;
 	};
 	readonly generateClientId?: () => string;
 	readonly createWebSocketServer?: (options: ServerOptions) => WebSocketServer;
@@ -25,6 +25,8 @@ export interface IConfig {
 		readonly password?: string;
 		readonly keyPrefix?: string;
 	};
+	readonly message_queue_enabled: boolean;
+	readonly redis_ttl: number;
 }
 
 const defaultConfig: IConfig = {
@@ -39,6 +41,8 @@ const defaultConfig: IConfig = {
 	proxied: false,
 	cleanup_out_msgs: 1000,
 	corsOptions: { origin: true },
+	message_queue_enabled: true,
+	redis_ttl: 24 * 60 * 60, // 24 hours
 };
 
 export default defaultConfig;

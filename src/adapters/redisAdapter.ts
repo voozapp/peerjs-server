@@ -14,12 +14,14 @@ export class RedisAdapter implements IRedisAdapter {
 	private readonly sub: Redis;
 	private readonly channel = "peerjs:messages";
 	private readonly queuePrefix = "peerjs:queue:";
+	private readonly ttl: number;
 
 	constructor(options: {
 		host?: string;
 		port?: number;
 		password?: string;
 		keyPrefix?: string;
+		ttl?: number;
 	}) {
 		this.pub = new Redis({
 			...options,
@@ -27,6 +29,7 @@ export class RedisAdapter implements IRedisAdapter {
 		this.sub = new Redis({
 			...options,
 		});
+		this.ttl = options.ttl ?? 24 * 60 * 60;
 	}
 
 	public async publish(message: IMessage): Promise<void> {
@@ -53,8 +56,7 @@ export class RedisAdapter implements IRedisAdapter {
 	): Promise<void> {
 		const key = `${this.queuePrefix}${clientId}`;
 		await this.pub.rpush(key, JSON.stringify(message));
-		// Set expiry for 24 hours just in case
-		await this.pub.expire(key, 24 * 60 * 60);
+		await this.pub.expire(key, this.ttl);
 	}
 
 	public async getMessagesFromQueue(clientId: string): Promise<IMessage[]> {

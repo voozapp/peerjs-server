@@ -120,8 +120,23 @@ const opts = y
 			describe: "Redis password",
 			default: process.env["REDIS_PASSWORD"],
 		},
+		"message-queue-enabled": {
+			type: "boolean",
+			demandOption: false,
+			describe: "Enable message queueing (persistence/offline support)",
+			default: process.env["MESSAGE_QUEUE_ENABLED"] !== "false",
+		},
+		"redis-ttl": {
+			type: "number",
+			demandOption: false,
+			describe: "Redis message queue TTL in seconds",
+			default: process.env["REDIS_TTL"]
+				? parseInt(process.env["REDIS_TTL"])
+				: 24 * 60 * 60,
+		},
 	})
 	.boolean("allow_discovery")
+	.boolean("message-queue-enabled")
 	.parseSync();
 
 if (!opts.port) {
@@ -142,6 +157,9 @@ if (opts["redis-host"] || opts["redis-port"]) {
 		password: opts["redis-password"],
 	};
 }
+// Map CLI/ENV to library config names
+opts["message_queue_enabled"] = opts["message-queue-enabled"];
+opts["redis_ttl"] = opts["redis-ttl"];
 process.on("uncaughtException", function (e) {
 	console.error("Error: " + e.toString());
 });

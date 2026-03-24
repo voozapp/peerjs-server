@@ -41,11 +41,19 @@ export const createInstance = ({
 
 	let redisAdapter: RedisAdapter | undefined;
 	if (config.redisOptions) {
-		redisAdapter = new RedisAdapter(config.redisOptions);
+		redisAdapter = new RedisAdapter({
+			...config.redisOptions,
+			ttl: config.redis_ttl,
+		});
 		realm.setRedisAdapter(redisAdapter);
 	}
 
-	const messageHandler = new MessageHandler(realm, undefined, redisAdapter);
+	const messageHandler = new MessageHandler(
+		realm,
+		undefined,
+		redisAdapter,
+		config.message_queue_enabled,
+	);
 
 	if (redisAdapter) {
 		redisAdapter
@@ -94,24 +102,26 @@ export const createInstance = ({
 
 	wss.on("connection", (client: IClient) => {
 		void (async () => {
-			if (redisAdapter) {
-				const messages = await redisAdapter.getMessagesFromQueue(
-					client.getId(),
-				);
-				for (const message of messages) {
-					await messageHandler.handle(client, message);
-				}
-				await realm.clearMessageQueue(client.getId());
-			} else {
-				const messageQueue = realm.getMessageQueueById(client.getId());
-
-				if (messageQueue) {
-					let message: IMessage | undefined;
-
-					while ((message = messageQueue.readMessage())) {
+			if (config.message_queue_enabled) {
+				if (redisAdapter) {
+					const messages = await redisAdapter.getMessagesFromQueue(
+						client.getId(),
+					);
+					for (const message of messages) {
 						await messageHandler.handle(client, message);
 					}
 					await realm.clearMessageQueue(client.getId());
+				} else {
+					const messageQueue = realm.getMessageQueueById(client.getId());
+
+					if (messageQueue) {
+						let message: IMessage | undefined;
+
+						while ((message = messageQueue.readMessage())) {
+							await messageHandler.handle(client, message);
+						}
+						await realm.clearMessageQueue(client.getId());
+					}
 				}
 			}
 
@@ -134,6 +144,8 @@ export const createInstance = ({
 		app.emit("error", error);
 	});
 
-	messagesExpire.startMessagesExpiration();
+	if (config.message_queue_enabled) {
+		messagesExpire.startMessagesExpiration();
+	}
 	checkBrokenConnections.start();
 };

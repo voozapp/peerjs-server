@@ -7,9 +7,11 @@ import type { IRedisAdapter } from "../../../adapters/redisAdapter.ts";
 export const TransmissionHandler = ({
 	realm,
 	redisAdapter,
+	messageQueueEnabled = true,
 }: {
 	realm: IRealm;
 	redisAdapter?: IRedisAdapter;
+	messageQueueEnabled?: boolean;
 }): ((client: IClient | undefined, message: IMessage) => Promise<boolean>) => {
 	const handle = async (
 		client: IClient | undefined,
@@ -74,7 +76,7 @@ export const TransmissionHandler = ({
 				// messages.
 				const ignoredTypes = [MessageType.LEAVE, MessageType.EXPIRE];
 
-				if (!ignoredTypes.includes(type) && dstId) {
+				if (messageQueueEnabled && !ignoredTypes.includes(type) && dstId) {
 					await realm.addMessageToQueue(dstId, message);
 				} else if (type === MessageType.LEAVE && !dstId) {
 					realm.removeClientById(srcId);
