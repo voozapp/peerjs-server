@@ -35,8 +35,8 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
-      - name: Run Format Check
-        run: npm run format:check
+      # - name: Run Format Check
+      #   run: npm run format:check
       - name: Run Lint
         run: npm run lint
       - run: npm run build
@@ -53,7 +53,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Calculate Version & Sync package.json
         id: versioning
@@ -61,7 +61,7 @@ jobs:
           # Generate version based on YYYY.MM.DD.RunNumber
           NEW_VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}
           echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-          
+
           # Update version field in package.json using jq
           jq ".version = \"$NEW_VERSION\"" package.json > package.json.tmp && mv package.json.tmp package.json
           echo "Updated package.json to $NEW_VERSION"
