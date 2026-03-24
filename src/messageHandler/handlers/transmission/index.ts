@@ -57,8 +57,15 @@ export const TransmissionHandler = ({
 			// However, our RedisAdapter doesn't mark messages. 
 			// Let's add an internal property `_broadcast` to the message when publishing.
 			
-			if (redisAdapter && !(message as any)._broadcast) {
-				await redisAdapter.publish({ ...message, _broadcast: true } as any);
+			interface IBroadcastMessage extends IMessage {
+				_broadcast?: boolean;
+			}
+
+			if (redisAdapter && !(message as IBroadcastMessage)._broadcast) {
+				await redisAdapter.publish({
+					...message,
+					_broadcast: true,
+				} as IBroadcastMessage);
 			} else {
 				// Wait for this client to connect/reconnect (XHR) for important
 				// messages.

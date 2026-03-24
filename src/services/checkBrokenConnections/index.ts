@@ -69,7 +69,7 @@ export class CheckBrokenConnections {
 			try {
 				client.getSocket()?.close();
 			} finally {
-				this.realm.clearMessageQueue(clientId);
+				void this.realm.clearMessageQueue(clientId);
 				this.realm.removeClientById(clientId);
 
 				client.setSocket(null);

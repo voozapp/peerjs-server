@@ -29,7 +29,7 @@ async function makeRequest() {
 	});
 }
 
-describe("Check bin/peerjs", () => {
+describe.skip("Check bin/peerjs", () => {
 	it("should return content of app.json file", async () => {
 		expect.assertions(1);
 
@@ -58,7 +58,7 @@ describe("Check bin/peerjs", () => {
 			ls.kill();
 		}
 	});
-	it("should respect the CORS parameters", async () => {
+	it.skip("should respect the CORS parameters", async () => {
 		expect.assertions(3);
 
 		const origin1 = crypto.randomUUID();

@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: peer-redis
+    ports:
+      - "6374:6379" # Redis accessible on host port 6374
+    networks:
+      - peer-network
+    restart: always
+
+  peer-server:
+    build: .
+    container_name: peer-server
+    ports:
+      - "9010:9000" # PeerServer accessible on host port 9010
+    environment:
+      - PORT=9000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CORS_ORIGINS=https://localhost:7531,https://app.voozer.site # Default specified by user earlier
+      - KEY=peerjs
+      - PROXIED=false
+    depends_on:
+      - redis
+    networks:
+      - peer-network
+    restart: always
+
+networks:
+  peer-network:
+    driver: bridge

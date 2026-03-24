@@ -39,10 +39,6 @@ const defaultConfig: IConfig = {
 	proxied: false,
 	cleanup_out_msgs: 1000,
 	corsOptions: { origin: true },
-	redisOptions: {
-		host: "127.0.0.1",
-		port: 6370,
-	},
 };
 
 export default defaultConfig;

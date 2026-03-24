@@ -24,40 +24,49 @@ const opts = y
 			demandOption: false,
 			alias: "t",
 			describe: "timeout (milliseconds)",
-			default: 5000,
+			default: process.env["EXPIRE_TIMEOUT"]
+				? parseInt(process.env["EXPIRE_TIMEOUT"])
+				: 5000,
 		},
 		concurrent_limit: {
 			demandOption: false,
 			alias: "c",
 			describe: "concurrent limit",
-			default: 5000,
+			default: process.env["CONCURRENT_LIMIT"]
+				? parseInt(process.env["CONCURRENT_LIMIT"])
+				: 5000,
 		},
 		alive_timeout: {
 			demandOption: false,
 			describe: "broken connection check timeout (milliseconds)",
-			default: 60000,
+			default: process.env["ALIVE_TIMEOUT"]
+				? parseInt(process.env["ALIVE_TIMEOUT"])
+				: 60000,
 		},
 		key: {
 			demandOption: false,
 			alias: "k",
 			describe: "connection key",
-			default: "peerjs",
+			default: process.env["KEY"] ?? "peerjs",
 		},
 		sslkey: {
 			type: "string",
 			demandOption: false,
 			describe: "path to SSL key",
+			default: process.env["SSL_KEY"],
 		},
 		sslcert: {
 			type: "string",
 			demandOption: false,
 			describe: "path to SSL certificate",
+			default: process.env["SSL_CERT"],
 		},
 		host: {
 			type: "string",
 			demandOption: false,
 			alias: "H",
 			describe: "host",
+			default: process.env["HOST"] ?? "::",
 		},
 		port: {
 			type: "number",
@@ -75,17 +84,21 @@ const opts = y
 			type: "boolean",
 			demandOption: false,
 			describe: "allow discovery of peers",
+			default: process.env["ALLOW_DISCOVERY"] === "true",
 		},
 		proxied: {
 			type: "boolean",
 			demandOption: false,
 			describe: "Set true if PeerServer stays behind a reverse proxy",
-			default: false,
+			default: process.env["PROXIED"] === "true",
 		},
 		cors: {
 			type: "string",
 			array: true,
 			describe: "Set the list of CORS origins",
+			default: process.env["CORS_ORIGINS"]
+				? process.env["CORS_ORIGINS"].split(",")
+				: undefined,
 		},
 		"redis-host": {
 			type: "string",
@@ -121,6 +134,7 @@ if (opts.cors) {
 		origin: opts.cors,
 	} satisfies CorsOptions;
 }
+// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 if (opts["redis-host"] || opts["redis-port"]) {
 	opts["redisOptions"] = {
 		host: opts["redis-host"],
@@ -155,6 +169,7 @@ const server = PeerServer(opts, (server) => {
 		"Started PeerServer on %s, port: %s, path: %s",
 		host,
 		port,
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		userPath || "/",
 	);
 

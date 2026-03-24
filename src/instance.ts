@@ -50,14 +50,18 @@ export const createInstance = ({
 	if (redisAdapter) {
 		redisAdapter
 			.subscribe((message) => {
-				const { dst } = message;
-				const client = realm.getClientById(dst);
-				if (client) {
-					// This pod has the target client!
-					messageHandler.handle(client, message);
-				}
+				void (async () => {
+					const { dst } = message;
+					const client = realm.getClientById(dst);
+					if (client) {
+						// This pod has the target client!
+						await messageHandler.handle(client, message);
+					}
+				})();
 			})
-			.catch((e) => console.error("Redis subscribe error", e));
+			.catch((e) => {
+				console.error("Redis subscribe error", e);
+			});
 	}
 
 	const api = Api({ config, realm, corsOptions: options.corsOptions });
@@ -88,32 +92,36 @@ export const createInstance = ({
 		config: customConfig,
 	});
 
-	wss.on("connection", async (client: IClient) => {
-		if (redisAdapter) {
-			const messages = await redisAdapter.getMessagesFromQueue(client.getId());
-			for (const message of messages) {
-				await messageHandler.handle(client, message);
-			}
-			await realm.clearMessageQueue(client.getId());
-		} else {
-			const messageQueue = realm.getMessageQueueById(client.getId());
-
-			if (messageQueue) {
-				let message: IMessage | undefined;
-
-				while ((message = messageQueue.readMessage())) {
-					messageHandler.handle(client, message);
+	wss.on("connection", (client: IClient) => {
+		void (async () => {
+			if (redisAdapter) {
+				const messages = await redisAdapter.getMessagesFromQueue(client.getId());
+				for (const message of messages) {
+					await messageHandler.handle(client, message);
 				}
-				realm.clearMessageQueue(client.getId());
-			}
-		}
+				await realm.clearMessageQueue(client.getId());
+			} else {
+				const messageQueue = realm.getMessageQueueById(client.getId());
 
-		app.emit("connection", client);
+				if (messageQueue) {
+					let message: IMessage | undefined;
+
+					while ((message = messageQueue.readMessage())) {
+						await messageHandler.handle(client, message);
+					}
+					await realm.clearMessageQueue(client.getId());
+				}
+			}
+
+			app.emit("connection", client);
+		})();
 	});
 
-	wss.on("message", async (client: IClient, message: IMessage) => {
-		app.emit("message", client, message);
-		await messageHandler.handle(client, message);
+	wss.on("message", (client: IClient, message: IMessage) => {
+		void (async () => {
+			app.emit("message", client, message);
+			await messageHandler.handle(client, message);
+		})();
 	});
 
 	wss.on("close", (client: IClient) => {

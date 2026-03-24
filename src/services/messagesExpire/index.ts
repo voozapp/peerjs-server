@@ -76,7 +76,7 @@ export class MessagesExpire implements IMessagesExpire {
 				const seenKey = `${message.src}_${message.dst}`;
 
 				if (!seen[seenKey]) {
-					this.messageHandler.handle(undefined, {
+					void this.messageHandler.handle(undefined, {
 						type: MessageType.EXPIRE,
 						src: message.dst,
 						dst: message.src,
@@ -86,7 +86,7 @@ export class MessagesExpire implements IMessagesExpire {
 				}
 			}
 
-			this.realm.clearMessageQueue(destinationClientId);
+			void this.realm.clearMessageQueue(destinationClientId);
 		}
 	}
 }
