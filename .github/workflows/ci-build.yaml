@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: CI Build Vooz Peer Server
+  test-and-lint:
+    name: CI Test & Lint Vooz Peer Server
     runs-on: ubuntu-latest
     services:
       redis:
@@ -40,7 +40,8 @@ jobs:
         run: npm run coverage
 
   docker-push:
-    needs: build
+    needs: test-and-lint
+    name: CI Build & Push Vooz Peer Server
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
