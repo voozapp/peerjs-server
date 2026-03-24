@@ -22,6 +22,10 @@ RUN npm ci --omit=dev
 
 COPY --from=build /peer-server/dist/bin/peerjs.js ./
 
+# Add an environment variable so the app knows its version, This can be read by your code via process.env.APP_VERSION
+ARG VERSION
+ENV APP_VERSION=$VERSION
+
 ENV PORT=9000
 EXPOSE 9000
 
