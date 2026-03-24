@@ -8,10 +8,10 @@
 
 **Short answer: Redis does NOT store peer _connection_ state (socket handles, token, presence). It stores _pending messages_ (queued signaling) and acts as a _Pub/Sub bus_ between pods.**
 
-| Redis Key / Channel | Type | Stores | TTL |
-| :--- | :--- | :--- | :--- |
-| `peerjs:messages` | Pub/Sub Channel | Serialized `IMessage` objects broadcast between pods | N/A (ephemeral) |
-| `peerjs:queue:<clientId>` | Redis List  | Queued `IMessage[]` for a client that is offline/on another pod | 24 hours |
+| Redis Key / Channel       | Type            | Stores                                                          | TTL             |
+| :------------------------ | :-------------- | :-------------------------------------------------------------- | :-------------- |
+| `peerjs:messages`         | Pub/Sub Channel | Serialized `IMessage` objects broadcast between pods            | N/A (ephemeral) |
+| `peerjs:queue:<clientId>` | Redis List      | Queued `IMessage[]` for a client that is offline/on another pod | 24 hours        |
 
 There is no Redis key for peer registration, socket handles, tokens, or last-ping timestamps.
 
@@ -51,13 +51,15 @@ peerjs:messages          → Pub/Sub channel (all pods subscribe)
 This fork prioritizes **low-latency signaling** for real-time applications (like random matching platforms) over strict offline persistence.
 
 ### 3a. Presence (Why not in Redis?)
+
 - **Performance**: Storing presence in Redis would require a RTT (Round Trip Time) call on every connection, heartbeat, and disconnection.
 - **Complexity**: It requires a cluster-wide heartbeat/expiry mechanism to avoid "ghost" peers when pods crash.
 - **Current State**: Presence is kept in memory. Peer discovery is local to each pod.
 
 ### 3b. Reliable Signaling (Broadcast vs Queueing)
+
 - **Standard PeerJS**: Queues any message that can't be delivered to a live socket.
-- **This Redis Fork**: 
+- **This Redis Fork**:
   - If a peer is on Pod A, it sends immediately.
   - If NOT on Pod A, it **broadcasts** to the cluster.
   - If ANY pod has the peer, it delivers via WebSocket.
@@ -156,15 +158,15 @@ WS close event
 
 ## 7. Key Config Values
 
-| Config Key | Default | Purpose |
-| :--- | :--- | :--- |
-| `alive_timeout` | 60,000ms | Max age without HEARTBEAT before client is evicted |
-| `concurrent_limit` | 5,000 | Max concurrent peers per pod |
-| `message_queue_enabled` | `true` | Enable message queueing (persistence/offline support). Set ENV `MESSAGE_QUEUE_ENABLED=false` to disable. |
-| `redis_ttl` | `86400` | Redis message queue TTL in seconds. Set ENV `REDIS_TTL`. |
-| `redisOptions.host` | – | Redis host; enables Redis mode when set |
-| `redisOptions.port` | – | Redis port |
-| `redisOptions.password` | – | Redis auth |
+| Config Key              | Default  | Purpose                                                                                                  |
+| :---------------------- | :------- | :------------------------------------------------------------------------------------------------------- |
+| `alive_timeout`         | 60,000ms | Max age without HEARTBEAT before client is evicted                                                       |
+| `concurrent_limit`      | 5,000    | Max concurrent peers per pod                                                                             |
+| `message_queue_enabled` | `true`   | Enable message queueing (persistence/offline support). Set ENV `MESSAGE_QUEUE_ENABLED=false` to disable. |
+| `redis_ttl`             | `86400`  | Redis message queue TTL in seconds. Set ENV `REDIS_TTL`.                                                 |
+| `redisOptions.host`     | –        | Redis host; enables Redis mode when set                                                                  |
+| `redisOptions.port`     | –        | Redis port                                                                                               |
+| `redisOptions.password` | –        | Redis auth                                                                                               |
 
 ---
 
@@ -181,15 +183,15 @@ When a pod is killed:
 
 ## 8. File Reference Quick-Map
 
-| Question | File |
-| :--- | :--- |
-| How does Redis connect? | `src/adapters/redisAdapter.ts` |
-| Where is a peer stored? | `src/models/realm.ts` (`clients` Map) |
-| How are messages queued? | `src/models/realm.ts` → `addMessageToQueue()` |
-| What is a Client? | `src/models/client.ts` |
-| How does routing work? | `src/messageHandler/handlers/transmission/index.ts` |
-| How does a WS connection open? | `src/services/webSocketServer/index.ts` |
-| How are dead clients evicted? | `src/services/checkBrokenConnections/index.ts` |
-| How are stale queues expired? | `src/services/messagesExpire/index.ts` |
-| Where is the app wired together? | `src/instance.ts` |
-| Config options? | `src/config/index.ts` |
+| Question                         | File                                                |
+| :------------------------------- | :-------------------------------------------------- |
+| How does Redis connect?          | `src/adapters/redisAdapter.ts`                      |
+| Where is a peer stored?          | `src/models/realm.ts` (`clients` Map)               |
+| How are messages queued?         | `src/models/realm.ts` → `addMessageToQueue()`       |
+| What is a Client?                | `src/models/client.ts`                              |
+| How does routing work?           | `src/messageHandler/handlers/transmission/index.ts` |
+| How does a WS connection open?   | `src/services/webSocketServer/index.ts`             |
+| How are dead clients evicted?    | `src/services/checkBrokenConnections/index.ts`      |
+| How are stale queues expired?    | `src/services/messagesExpire/index.ts`              |
+| Where is the app wired together? | `src/instance.ts`                                   |
+| Config options?                  | `src/config/index.ts`                               |
