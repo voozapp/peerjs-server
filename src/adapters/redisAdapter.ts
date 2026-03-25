@@ -22,6 +22,7 @@ export class RedisAdapter implements IRedisAdapter {
 		password?: string;
 		keyPrefix?: string;
 		ttl?: number;
+		tls?: Record<string, unknown>;
 	}) {
 		this.pub = new Redis({
 			...options,

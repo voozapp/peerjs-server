@@ -158,15 +158,16 @@ WS close event
 
 ## 7. Key Config Values
 
-| Config Key              | Default  | Purpose                                                                                                  |
-| :---------------------- | :------- | :------------------------------------------------------------------------------------------------------- |
-| `alive_timeout`         | 60,000ms | Max age without HEARTBEAT before client is evicted                                                       |
-| `concurrent_limit`      | 5,000    | Max concurrent peers per pod                                                                             |
-| `message_queue_enabled` | `true`   | Enable message queueing (persistence/offline support). Set ENV `MESSAGE_QUEUE_ENABLED=false` to disable. |
-| `redis_ttl`             | `86400`  | Redis message queue TTL in seconds. Set ENV `REDIS_TTL`.                                                 |
-| `redisOptions.host`     | –        | Redis host; enables Redis mode when set                                                                  |
-| `redisOptions.port`     | –        | Redis port                                                                                               |
-| `redisOptions.password` | –        | Redis auth                                                                                               |
+| Config Key              | Default  | Purpose                                                                                                          |
+| :---------------------- | :------- | :--------------------------------------------------------------------------------------------------------------- |
+| `alive_timeout`         | 60,000ms | Max age without HEARTBEAT before client is evicted                                                               |
+| `concurrent_limit`      | 5,000    | Max concurrent peers per pod                                                                                     |
+| `message_queue_enabled` | `true`   | Enable message queueing (persistence/offline support). Set ENV `MESSAGE_QUEUE_ENABLED=false` to disable.         |
+| `redis_ttl`             | `86400`  | Redis message queue TTL in seconds. Set ENV `REDIS_TTL`.                                                         |
+| `redisOptions.host`     | –        | Redis host; enables Redis mode when set                                                                          |
+| `redisOptions.port`     | –        | Redis port                                                                                                       |
+| `redisOptions.password` | –        | Redis auth                                                                                                       |
+| `redisOptions.tls`      | `false`  | Enable TLS encryption for secure Redis connections (required for Azure Managed Redis). Set ENV `REDIS_TLS=true`. |
 
 ---
 

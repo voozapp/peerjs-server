@@ -120,6 +120,12 @@ const opts = y
 			describe: "Redis password",
 			default: process.env["REDIS_PASSWORD"],
 		},
+		"redis-tls": {
+			type: "boolean",
+			demandOption: false,
+			describe: "Enable secure connection with Redis (TLS)",
+			default: process.env["REDIS_TLS"] === "true",
+		},
 		"message-queue-enabled": {
 			type: "boolean",
 			demandOption: false,
@@ -155,6 +161,7 @@ if (opts["redis-host"] || opts["redis-port"]) {
 		host: opts["redis-host"],
 		port: opts["redis-port"],
 		password: opts["redis-password"],
+		...(opts["redis-tls"] ? { tls: {} } : {}),
 	};
 }
 // Map CLI/ENV to library config names

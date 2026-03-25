@@ -24,6 +24,7 @@ export interface IConfig {
 		readonly port?: number;
 		readonly password?: string;
 		readonly keyPrefix?: string;
+		readonly tls?: Record<string, unknown>;
 	};
 	readonly message_queue_enabled: boolean;
 	readonly redis_ttl: number;
